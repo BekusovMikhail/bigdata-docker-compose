@@ -3,6 +3,7 @@ from mrjob.step import MRStep
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 import re
+from nltk.stem.snowball import SnowballStemmer
 
 # Uncomment if not installed. If install comment, because nltk.download is bugged
 import nltk
@@ -10,24 +11,25 @@ import nltk
 # nltk.download('punkt')
 
 class Top_bigram(MRJob):
-    stop_words = set(stopwords.words("english"))
+    def mapper_1_init(self):
+        self.stopwords = set(stopwords.words("english")) # не работает на хадупе ни в какую...
+        self.stemmer = SnowballStemmer("english")
+        self.tokenizer = word_tokenize
+        pass
     def mapper_1(self, _, line):
-        icp = [x for x in line.split('"') if x != "" and x != " " and x!="\n"]
+        icp = [x for x in line.split('"') if x != "" and x != " "]
         if len(icp) == 3:
             phrase = icp[2]
-            # stop_words = self.stop_words
             cleaned_line = re.sub(r"[^\w\s]", "", phrase.lower())
-            tokenized_str = word_tokenize(cleaned_line)
-            words = [
-                word
-                for word in tokenized_str
-                if word not in self.stop_words
-            ]
+            tokenized_line = word_tokenize(cleaned_line)
+            words = [self.stemmer.stem(x) for x in tokenized_line if x not in self.stopwords]
             bigrams = [
                 f"{words[i]} {words[i+1]}" for i in range(len(words) - 1)
             ]
             for bigram in bigrams:
                 yield bigram, 1
+        else:
+            pass
 
     def reducer_1(self, bigram, counts):
         yield None, (bigram, sum(counts))
@@ -41,7 +43,7 @@ class Top_bigram(MRJob):
 
     def steps(self):
         return [
-            MRStep(mapper=self.mapper_1, reducer=self.reducer_1),
+            MRStep(mapper_init=self.mapper_1_init, mapper=self.mapper_1, reducer=self.reducer_1),
             MRStep(reducer=self.reducer_2),
         ]
 
