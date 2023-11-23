@@ -11,6 +11,7 @@ services:
 #    command: ["hdfs", "namenode", "-format", "-force"]
 # А уже потом спокойно запускай меня
     command: ["hdfs", "namenode"]
+    # command: ["hdfs", "namenode", "-format", "-force"]
     env_file:
       - ./hadoop.env
     ports:
@@ -32,7 +33,7 @@ services:
     volumes:
       - hdfs1:/tmp/hadoop-hadoop
       - ./hadoop_conf/etc:/opt/hadoop/etc
-
+ 
   resourcemanager:
     build:
       context: hadoop/.
@@ -81,6 +82,7 @@ services:
     # Сначала запусти меня
     #    command: ["schematool", "--dbType", "postgres", "--initSchema"]
     # А уже потом спокойно запускай меня
+    # command: ["schematool", "--dbType", "postgres", "--initSchema"]
     command: [ "hive", "--service", "metastore" ]
     environment:
       - HIVE_SERVER2_THRIFT_PORT=10000
@@ -120,6 +122,7 @@ services:
     volumes:
       - ./hadoop_conf/etc:/opt/hadoop/etc
       - ./notebooks:/opt/notebooks
+      - ./homework_data_screenshots:/opt/homework_data_screenshots
     command: ["jupyter", "notebook", "--allow-root", "--ip", "0.0.0.0"]
 
 #  Вот этого монстра запускай на свой страх и риск

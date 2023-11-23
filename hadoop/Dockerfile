@@ -23,6 +23,9 @@ RUN tar -xzf hadoop-3.3.6.tar.gz -C /opt
 RUN rm hadoop-3.3.6.tar.gz
 RUN ln -sf /opt/hadoop-3.3.6 /opt/hadoop
 
+RUN apt-get update -y \
+    && apt-get install -y python3-pip
+
 RUN mkdir -p /tmp/hadoop-hadoop
 
 WORKDIR /opt/hadoop
@@ -55,9 +58,10 @@ FROM hive_hadoop_base AS jupyter_hadoop
 
 WORKDIR /opt
 
-RUN apt-get update -y \
-    && apt-get install -y python3-pip
 RUN pip3 install notebook
+RUN pip3 install nltk
+RUN python3 -c "import nltk; nltk.download('stopwords')"
+RUN python3 -c "import nltk; nltk.download('punkt')"
 
 FROM hive_hadoop_base AS zeppelin_hadoop
 
