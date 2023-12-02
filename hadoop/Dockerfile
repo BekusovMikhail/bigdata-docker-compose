@@ -26,6 +26,8 @@ RUN ln -sf /opt/hadoop-3.3.6 /opt/hadoop
 RUN apt-get update -y \
     && apt-get install -y python3-pip
 
+RUN pip3 install pyspark numpy pandas pyarrow scikit-learn
+
 RUN mkdir -p /tmp/hadoop-hadoop
 
 WORKDIR /opt/hadoop
@@ -41,37 +43,9 @@ ENV HADOOP_CONF_DIR $HADOOP_HOME/etc/hadoop
 
 FROM build_hadoop_base AS build_hadoop
 
-FROM build_hadoop_base AS hive_hadoop_base
-ENV HIVE_HOME /opt/hive
-ENV PATH $HIVE_HOME/bin:$PATH
 
-WORKDIR /opt
-
-RUN mkdir /home/hive
-RUN curl -o apache-hive-3.1.3-bin.tar.gz https://downloads.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
-RUN tar -xzf apache-hive-3.1.3-bin.tar.gz -C /opt && mv apache-hive-3.1.3-bin hive && rm apache-hive-3.1.3-bin.tar.gz
-
-FROM hive_hadoop_base AS hive_hadoop
-
-
-FROM hive_hadoop_base AS jupyter_hadoop
+FROM build_hadoop AS jupyter_hadoop
 
 WORKDIR /opt
 
 RUN pip3 install notebook
-RUN pip3 install nltk
-RUN python3 -c "import nltk; nltk.download('stopwords')"
-RUN python3 -c "import nltk; nltk.download('punkt')"
-
-FROM hive_hadoop_base AS zeppelin_hadoop
-
-WORKDIR /opt
-
-RUN curl -o zeppelin-0.10.1-bin-all.tgz https://dlcdn.apache.org/zeppelin/zeppelin-0.10.1/zeppelin-0.10.1-bin-all.tgz
-RUN tar -xzf zeppelin-0.10.1-bin-all.tgz -C /opt && mv zeppelin-0.10.1-bin-all zeppelin && rm zeppelin-0.10.1-bin-all.tgz
-
-COPY zeppelin_conf/zeppelin-site.xml /opt/zeppelin/conf/
-
-
-
-
