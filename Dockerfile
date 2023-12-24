@@ -52,5 +52,6 @@ RUN wget -P /opt/flink/lib/ https://repo.maven.apache.org/maven2/org/apache/flin
 
 
 RUN echo "taskmanager.memory.jvm-metaspace.size: 512m" >> /opt/flink/conf/flink-conf.yaml;
+RUN echo "taskmanager.numberOfTaskSlots: 30" >> /opt/flink/conf/flink-conf.yaml;
 
 WORKDIR /opt/flink
