@@ -68,7 +68,7 @@ def python_data_stream_example():
         source, WatermarkStrategy.no_watermarks(), "Kafka Source"
     )
     ds.map(TemperatureFunction(), Types.STRING()).sink_to(sink)
-    env.execute_async("Devices preprocessing")
+    env.execute_async("HDFS checkpoint save")
 
 
 class TemperatureFunction(MapFunction):

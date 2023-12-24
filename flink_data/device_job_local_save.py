@@ -45,7 +45,7 @@ def python_data_stream_example():
         KafkaSource.builder()
         .set_bootstrap_servers("kafka:9092")
         .set_topics("bekusovmhw3")
-        .set_group_id("pyflink-e2e-source")
+        .set_group_id("localsave")
         .set_starting_offsets(KafkaOffsetsInitializer.earliest())
         .set_value_only_deserializer(json_row_schema)
         .build()
@@ -68,7 +68,7 @@ def python_data_stream_example():
         source, WatermarkStrategy.no_watermarks(), "Kafka Source"
     )
     ds.map(TemperatureFunction(), Types.STRING()).sink_to(sink)
-    env.execute_async("Devices preprocessing")
+    env.execute_async("Local checkpoint save")
 
 
 class TemperatureFunction(MapFunction):

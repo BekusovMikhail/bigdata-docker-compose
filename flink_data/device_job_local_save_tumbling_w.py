@@ -1,4 +1,4 @@
-from pyflink.common import SimpleStringSchema
+from pyflink.common import SimpleStringSchema, Time
 from pyflink.common.typeinfo import Types, RowTypeInfo
 from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.datastream import (
@@ -18,16 +18,13 @@ from pyflink.datastream.connectors.kafka import (
 from pyflink.datastream.formats.json import JsonRowDeserializationSchema
 from pyflink.datastream.functions import MapFunction, WindowFunction
 
-from pyflink.datastream import ReduceFunction
-
-
-from pyflink.datastream.window import TumblingEventTimeWindows
+from pyflink.datastream.window import TumblingProcessingTimeWindows
 
 
 class MaxTemperatureFunction(WindowFunction):
     def apply(self, key, window, accumulator):
-        max_temp = max(window, key=lambda x: x["temperature"])
-        return max_temp
+        max_temp = max(accumulator, key=lambda x: x["temperature"])
+        yield str(max_temp["temperature"])
 
 
 def python_data_stream_example():
@@ -56,7 +53,7 @@ def python_data_stream_example():
         KafkaSource.builder()
         .set_bootstrap_servers("kafka:9092")
         .set_topics("bekusovmhw3")
-        .set_group_id("pyflink-e2e-source")
+        .set_group_id("tumbling")
         .set_starting_offsets(KafkaOffsetsInitializer.earliest())
         .set_value_only_deserializer(json_row_schema)
         .build()
@@ -67,7 +64,7 @@ def python_data_stream_example():
         .set_bootstrap_servers("kafka:9092")
         .set_record_serializer(
             KafkaRecordSerializationSchema.builder()
-            .set_topic("bekusovmhw3processed")
+            .set_topic("bekusovmhw3processedtumbling")
             .set_value_serialization_schema(SimpleStringSchema())
             .build()
         )
@@ -80,31 +77,14 @@ def python_data_stream_example():
     )
 
     windowed_ds = ds.key_by(lambda x: x["device_id"]).window(
-        TumblingEventTimeWindows(
-            10 * 60 * 1000,
-            0,
+        TumblingProcessingTimeWindows.of(
+            Time.seconds(10),
         )
     )
 
-    max_temp_ds = windowed_ds.reduce(MaxTemperatureFunction(), Types.STRING())
+    max_temp_ds = windowed_ds.apply(MaxTemperatureFunction(), Types.STRING()).sink_to(sink)
 
-    max_temp_ds.sink_to(sink)
-    env.execute_async("Devices preprocessing")
-
-    # ds.map(TemperatureFunction(), Types.STRING()).sink_to(sink)
-    # env.execute_async("Devices preprocessing")
-
-
-class TemperatureFunction(MapFunction):
-    def map(self, value):
-        device_id, temperature, execution_time = value
-        return str(
-            {
-                "device_id": device_id,
-                "temperature": temperature - 273,
-                "execution_time": execution_time,
-            }
-        )
+    env.execute("Tumbling windows")
 
 
 if __name__ == "__main__":
