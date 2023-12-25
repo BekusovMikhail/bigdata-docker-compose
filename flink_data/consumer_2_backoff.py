@@ -1,5 +1,6 @@
 from kafka import KafkaConsumer
 import time
+import random
 
 
 def backoff(tries, sleep):
@@ -17,15 +18,18 @@ def backoff(tries, sleep):
     return decorator
 
 
-@backoff(tries=10, sleep=60)
+@backoff(tries=10, sleep=7)
 def message_handler(value):
+    if random.random()<0.5:
+        print("retry")
+        raise Exception
     print(value)
 
 
 def create_consumer():
     print("Connecting to Kafka brokers")
     consumer = KafkaConsumer(
-        "bekusovmhw3processedtubling",
+        "bekusovmhw3",
         group_id="itmo_group1",
         bootstrap_servers="localhost:29092",
         auto_offset_reset="earliest",
